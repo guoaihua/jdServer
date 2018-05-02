@@ -3,9 +3,11 @@ var express = require('express');
 var path = require('path');
 var cookieParser = require('cookie-parser');
 var logger = require('morgan');
-
 var indexRouter = require('./routes/index');
 var usersRouter = require('./routes/users');
+var session = require('express-session');
+var cors = require('cors');
+
 
 var app = express();
 
@@ -18,9 +20,21 @@ app.set('view engine', 'jade');
 app.all('*',function (req,res,next) {
 	res.header("Access-Control-Allow-Origin","*");
   res.header("Access-Control-Allow-Headers","Content-Type");
+    res.header("Access-Control-Allow-Credentials",true);
 	next();
 });
 
+app.use(cookieParser('aa'));
+
+// 创建session
+app.use(session({
+    secret: 'aa',
+    resave: false,
+    saveUninitialized: true,
+    cookie: { maxAge: 80000 , secure: false }
+}))
+
+app.use(cors({credentials: true, origin: 'http://localhost:8080'}));
 app.use(logger('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
@@ -28,6 +42,9 @@ app.use(cookieParser());
 app.use(express.static('public'));
 app.use('/', indexRouter);
 app.use('/users', usersRouter);
+
+
+
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
