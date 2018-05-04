@@ -24,11 +24,11 @@ app.all('*',function (req,res,next) {
 	next();
 });
 
-app.use(cookieParser('aa'));
+app.use(cookieParser('secret'));
 
 // 创建session
 app.use(session({
-    secret: 'aa',
+    secret: 'secret',
     resave: false,
     saveUninitialized: true,
     cookie: { maxAge: 80000 , secure: false }

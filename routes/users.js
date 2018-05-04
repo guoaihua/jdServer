@@ -11,14 +11,8 @@ app.use(bodyparser.urlencoded({ extended: true }));
 
 
 /* GET users listing. */
-router.get('*', function(req, res, next) {
-	if(req.session) {
-        next();
-	}else{
-		res.send({status: "fail"});
-	}
-});
 
+// 登录页面创建session
 router.get('/login', function (req, res) {
 		var data = JSON.parse(req.query.form);
     	if(!req.session.username){
@@ -29,22 +23,14 @@ router.get('/login', function (req, res) {
             console.log(req.session);
             res.json({ret_code: 0, ret_msg: '登录成功'});
 		}
-
 })
 router.get('/slide_imgs', function(req, res, next){
-	console.log(req.session);
-	if(req.session.username){
-		console.log(11111);
         var imgs = [
             {src: URL+'/images/slide_imgs/bg1.jpg'},
             {src: URL+'/images/slide_imgs/bg1.jpg'},
             {src: URL+'/images/slide_imgs/bg1.jpg'}
         ]
         res.send(imgs)
-	}else {
-		res.send({status: 0})
-	}
-
 })
 
 router.get('/list_imgs', function(req, res, next){
