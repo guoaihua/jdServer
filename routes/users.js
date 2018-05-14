@@ -3,6 +3,8 @@ var router = express.Router();
 var bodyparser = require('body-parser');
 var URL = 'http://localhost:3001';
 var app = express();
+var mongoose = require('mongoose');
+require('../config/mongoose.config');
 
 /*使用bodyparder中间件*/
 app.use(bodyparser.json());
@@ -14,16 +16,78 @@ app.use(bodyparser.urlencoded({ extended: true }));
 
 // 登录页面创建session
 router.get('/login', function (req, res) {
-		var data = JSON.parse(req.query.form);
-    	if(!req.session.username){
-            req.session.username = data.user;
-            console.log(req.session);
-            res.json({ret_code: 0, ret_msg: '登录成功',ret_name:req.session.username});
-		}else{
-            console.log(req.session);
-            res.json({ret_code: 0, ret_msg: '登录成功'});
-		}
+		var clientData = JSON.parse(req.query.form);
+
+		// 获取model
+		var userModel = mongoose.model('User');
+		userModel.find({name: clientData.user},function (err, data) {
+			if(err){
+				console.log(err)
+			}
+			console.log(data, data[0])
+
+			if(!data[0]){
+				res.send({
+					status: 2,
+					info: "用户名不存在"
+				})
+				return
+			}
+			if(data[0].password === clientData.pw){
+                if(!req.session.username){
+                    req.session.username = clientData.user;
+                    console.log(req.session);
+                    res.json({ret_code: 0, ret_msg: '登录成功',ret_name:req.session.username});
+                }else{
+                    console.log(req.session);
+                    res.json({ret_code: 0, ret_msg: '登录成功',ret_name:req.session.username});
+                }
+			}else {
+				res.send({
+					status: 1,
+					info: '用户名与密码不匹配'
+				})
+			}
+        })
+
+
 })
+
+// 页面注册
+router.get('/register', function (req, res) {
+    var clientData = JSON.parse(req.query.form);
+		// 获取model
+	var userModel = mongoose.model('User');
+
+    userModel.find({name:clientData.user},function (err, data) {
+		if(err){
+			console.log(err)
+		}
+		console.log(data[0], !!data[0])
+		if(!data[0]){
+			var user = new userModel({
+				name: clientData.user,
+                password: clientData.pw
+			});
+
+			user.save(function (err) {
+				if(err){
+					console.log(err);
+					res.send({status:1, info: "数据库存储失败"})
+				}else {
+					res.send({status:0, info: "成功"})
+				}
+            })
+		}else {
+			res.send({
+				status:2,
+				info: "用户名已存在，请重新输入"
+			})
+		}
+    })
+
+})
+
 router.get('/slide_imgs', function(req, res, next){
         var imgs = [
             {src: URL+'/images/slide_imgs/bg1.jpg'},
