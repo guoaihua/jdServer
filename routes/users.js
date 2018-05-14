@@ -14,6 +14,8 @@ app.use(bodyparser.urlencoded({ extended: true }));
 
 /* GET users listing. */
 
+// 登录状态 0 表示成功 1: 失败
+
 // 登录页面创建session
 router.get('/login', function (req, res) {
 		var clientData = JSON.parse(req.query.form);
