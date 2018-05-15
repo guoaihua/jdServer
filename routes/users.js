@@ -4,6 +4,8 @@ var bodyparser = require('body-parser');
 var URL = 'http://localhost:3001';
 var app = express();
 var mongoose = require('mongoose');
+var multer = require('multer');
+var upload = multer({ dest: 'public/uploads/'});
 require('../config/mongoose.config');
 
 /*使用bodyparder中间件*/
@@ -20,9 +22,10 @@ app.use(bodyparser.urlencoded({ extended: true }));
 router.get('/login', function (req, res) {
 		var clientData = JSON.parse(req.query.form);
 
+		console.log(clientData);
 		// 获取model
 		var userModel = mongoose.model('User');
-		userModel.find({name: clientData.user},function (err, data) {
+		userModel.find({user: clientData.user},function (err, data) {
 			if(err){
 				console.log(err)
 			}
@@ -38,12 +41,8 @@ router.get('/login', function (req, res) {
 			if(data[0].password === clientData.pw){
                 if(!req.session.username){
                     req.session.username = clientData.user;
-                    console.log(req.session);
-                    res.json({ret_code: 0, ret_msg: '登录成功',ret_name:req.session.username});
-                }else{
-                    console.log(req.session);
-                    res.json({ret_code: 0, ret_msg: '登录成功',ret_name:req.session.username});
                 }
+                res.json({ret_code: 0, ret_msg: '登录成功',userInfos:data[0]});
 			}else {
 				res.send({
 					status: 1,
@@ -61,14 +60,14 @@ router.get('/register', function (req, res) {
 		// 获取model
 	var userModel = mongoose.model('User');
 
-    userModel.find({name:clientData.user},function (err, data) {
+    userModel.find({user:clientData.user},function (err, data) {
 		if(err){
 			console.log(err)
 		}
 		console.log(data[0], !!data[0])
 		if(!data[0]){
 			var user = new userModel({
-				name: clientData.user,
+				user: clientData.user,
                 password: clientData.pw
 			});
 
@@ -100,7 +99,6 @@ router.get('/slide_imgs', function(req, res, next){
 })
 
 router.get('/list_imgs', function(req, res, next){
-
   var items = [
   			{ banner: URL+'/images/pics.jpg',
   			imgs: [
@@ -121,63 +119,115 @@ router.get('/list_imgs', function(req, res, next){
      	 ]
   res.send(items);
 });
-
-router.get('/class_names', function (req, res, next) {
-	// body...
-	var names = [
-		{
-			"name": "春装",
-			"id": "0"
-		},
-				{
-			"name": "春装",
-			"id": "1"
-		},
-			{
-			"name": "春装",
-			"id": "2"  
-		},
-				{
-			"name": "春装",
-			"id": "3"
-		},
-				{
-			"name": "春装",
-			"id": "4"
-		},
-			{
-			"name": "春装",
-			"id": "5"  
-		},
-				{
-			"name": "春装",
-			"id": "6"
-		},
-				{
-			"name": "春装",
-			"id": "7"
-		},
-			{
-			"name": "春装",
-			"id": "8"  
-		},			{
-			"name": "春装",
-			"id": "9"  
-		},
-				{
-			"name": "春装",
-			"id": "10"
-		},
-				{
-			"name": "春装",
-			"id": "11"
-		},
-			{
-			"name": "春装",
-			"id": "12"  
+// 获取商店商品信息
+router.get('/getDetail', function (req, res, next) {
+    // body...
+	var id = req.query.id;
+   var shopModel = mongoose.model('shop');
+    shopModel.find({_id:id},{_id:1,shopName:1, user:1},function (err, data) {
+		if(err){
+			console.log(err)
+			return
 		}
-	]
-	res.send(names)
+		// 在pics库中查询详细资料
+        var picModel = mongoose.model('Pic');
+
+		console.log(data[0].user);
+		picModel.find({user:data[0].user}, function (err, data) {
+            if(err){
+                console.log(err)
+                return
+            }
+            console.log(data);
+            res.send(data);
+        })
+    })
+})
+
+// 获取所有商店名称
+router.get('/getShops', function (req, res, next) {
+	// body...
+   var shopModel = mongoose.model('shop');
+   shopModel.find({},{_id:1,shopName:1},function (err, data) {
+	   console.log(data)
+	   res.send(data)
+   })
+})
+
+// 商家店名修改
+router.get('/changeName', function (req, res, next) {
+	var shopName = req.query.shopName
+    // 通过用户名在数据库查询
+    var shopModel = mongoose.model('shop');
+
+    shopModel.find({shopName: shopName},function (err, data) {
+        if (err) {
+            console.log(err)
+            return
+        }
+        if(!!data[0]){
+        	res.send({status: 1, infos: "更改失败，店名已存在"})
+        	return
+		}
+		var shop = new shopModel({
+			user: req.session.username,
+			shopName: shopName
+		})
+
+		shop.save(function (err, data) {
+			if(err) {
+				return
+			}
+			res.send({
+                status: 0, infos: "更改成功"
+			})
+        })
+    })
+
+})
+
+// 获取商家商品信息
+router.get('/getGoods', function (req, res, next) {
+	console.log(req.query.user, req.body, req.params)
+	var user = req.query.user;
+	// 通过用户名在数据库查询
+    var picModel = mongoose.model('Pic');
+
+    picModel.find({user: user},{time:1, name:1, price:1, _id:0},function (err, data) {
+		if (err) {
+			console.log(err)
+			return
+		}
+		console.log(data)
+		res.send(data);
+    })
+	
+})
+
+// 上传商品信息
+router.post('/addGoods',upload.single('avatar'), function (req, res, next) {
+    var clientData = JSON.parse(req.query.data);
+	console.log(clientData)
+	// 图片信息保存在图片表中，每个表存储带上用户的名字
+	var picModel = mongoose.model('Pic');
+	var  pic = new picModel({
+		name: clientData.name,
+		price: clientData.price,
+		title: clientData.title,
+		address: clientData.address,
+		imgInfos: req.file,
+		user: req.session.username
+	});
+	pic.save(function (err, data) {
+		if(err){
+			console.log(err)
+		}
+		console.log(data)
+    })
+	res.send({
+		status: 0,
+		infos: '上传成功'
+	})
 })
 module.exports = router;
 
