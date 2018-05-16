@@ -15,12 +15,12 @@ var UsersSchema = new mongoose.Schema({
     time:{type:Date,default:Date.now}
 });
 
-var PicsSchema = new mongoose.Schema({
+var GoodsSchema = new mongoose.Schema({
     name: {type: String},
     price: {type: String},
     title: {type: String},
     address: {type: String},
-    imgInfos:{ type: Object},
+    imgSrc:{ type: String},
     user: {type: String},
     time:{type:Date,default:Date.now}
 });
@@ -32,5 +32,5 @@ var ShopsSchema = new mongoose.Schema({
 });
 
 mongoose.model('User',UsersSchema);
-mongoose.model('Pic',PicsSchema);
+mongoose.model('good',GoodsSchema);
 mongoose.model('shop',ShopsSchema);

@@ -2,10 +2,18 @@ var express = require('express');
 var router = express.Router();
 var bodyparser = require('body-parser');
 var URL = 'http://localhost:3001';
+var DEST = 'public/uploads';
 var app = express();
 var mongoose = require('mongoose');
 var multer = require('multer');
-var upload = multer({ dest: 'public/uploads/'});
+
+var storage = multer.diskStorage({
+    destination:DEST,
+    filename: function (req, file, cb) {
+  		cb(null, file.originalname)
+    }
+})
+var upload = multer({ storage:storage});
 require('../config/mongoose.config');
 
 /*使用bodyparder中间件*/
@@ -119,7 +127,24 @@ router.get('/list_imgs', function(req, res, next){
      	 ]
   res.send(items);
 });
-// 获取商店商品信息
+
+//获取单个详细信息
+router.get('/getGoodsInfos', function (req, res, next) {
+	var id = req.query.id
+    // 在goods库中查询详细资料
+    var goodsModel = mongoose.model('good');
+
+	goodsModel.find({_id:id}, function (err, data) {
+        if(err){
+            console.log(err)
+            return
+        }
+        console.log(data);
+        res.send(data);
+    })
+})
+
+// 获取商店商品信息列表
 router.get('/getDetail', function (req, res, next) {
     // body...
 	var id = req.query.id;
@@ -130,15 +155,13 @@ router.get('/getDetail', function (req, res, next) {
 			return
 		}
 		// 在pics库中查询详细资料
-        var picModel = mongoose.model('Pic');
+        var goodsModel = mongoose.model('good');
 
-		console.log(data[0].user);
-		picModel.find({user:data[0].user}, function (err, data) {
+        goodsModel.find({user:data[0].user},{imgSrc:1}, function (err, data) {
             if(err){
                 console.log(err)
                 return
             }
-            console.log(data);
             res.send(data);
         })
     })
@@ -191,9 +214,9 @@ router.get('/getGoods', function (req, res, next) {
 	console.log(req.query.user, req.body, req.params)
 	var user = req.query.user;
 	// 通过用户名在数据库查询
-    var picModel = mongoose.model('Pic');
+    var goodsModel = mongoose.model('good');
 
-    picModel.find({user: user},{time:1, name:1, price:1, _id:0},function (err, data) {
+    goodsModel.find({user: user},{time:1, name:1, price:1, _id:0},function (err, data) {
 		if (err) {
 			console.log(err)
 			return
@@ -207,18 +230,18 @@ router.get('/getGoods', function (req, res, next) {
 // 上传商品信息
 router.post('/addGoods',upload.single('avatar'), function (req, res, next) {
     var clientData = JSON.parse(req.query.data);
-	console.log(clientData)
+	console.log(req.session.username);
 	// 图片信息保存在图片表中，每个表存储带上用户的名字
-	var picModel = mongoose.model('Pic');
-	var  pic = new picModel({
+	var goodsModel = mongoose.model('good');
+	var  good = new goodsModel({
 		name: clientData.name,
 		price: clientData.price,
 		title: clientData.title,
 		address: clientData.address,
-		imgInfos: req.file,
+		imgSrc: URL+'/uploads/'+req.file.filename,
 		user: req.session.username
 	});
-	pic.save(function (err, data) {
+	good.save(function (err, data) {
 		if(err){
 			console.log(err)
 		}
