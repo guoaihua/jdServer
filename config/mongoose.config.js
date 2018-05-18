@@ -12,6 +12,8 @@ mongoose.connect(url, function (error) {
 var UsersSchema = new mongoose.Schema({
     user:{ type:String},
     password:{type:String},
+    address: {type:String},
+    phone: {type:String},
     time:{type:Date,default:Date.now}
 });
 
@@ -31,6 +33,21 @@ var ShopsSchema = new mongoose.Schema({
     time:{type:Date,default:Date.now}
 });
 
+var OrdersSchema = new mongoose.Schema({
+    shopName: {type: String},
+    shopImg: {type: String},
+    shopTitle: {type: String},
+    shopPrice: {type: String},
+    customer: {type: String},
+    customerphone: {type: String},
+    user: {type: String},
+    startaddress: {type:String},
+    endaddress: {type:String},
+    status: {type: Number, default: 0},
+    time:{type:Date,default:Date.now}
+});
+
 mongoose.model('User',UsersSchema);
 mongoose.model('good',GoodsSchema);
 mongoose.model('shop',ShopsSchema);
+mongoose.model('order',OrdersSchema);

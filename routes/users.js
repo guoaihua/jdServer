@@ -76,6 +76,8 @@ router.get('/register', function (req, res) {
 		if(!data[0]){
 			var user = new userModel({
 				user: clientData.user,
+				address: clientData.address,
+				phone: clientData.phone,
                 password: clientData.pw
 			});
 
@@ -252,5 +254,69 @@ router.post('/addGoods',upload.single('avatar'), function (req, res, next) {
 		infos: '上传成功'
 	})
 })
+
+// 创建订单
+router.post('/createOrder', function (req, res, next) {
+    console.log(req.query.form, req.body.params);
+    var orders = req.body.params.orders;
+    var orderModel = mongoose.model('order');
+    orders.forEach(function (item) {
+    	console.log(item.goodsInfos.name)
+        var order = new orderModel({
+            shopName: item.goodsInfos.name,
+            shopImg: item.goodsInfos.imgSrc,
+            shopTitle: item.goodsInfos.title,
+            shopPrice: item.goodsInfos.price,
+            customer: item.customer.user,
+            customerphone: item.customer.phone,
+            user: item.goodsInfos.user,
+            startaddress: item.goodsInfos.address,
+            endaddress: item.customer.address,
+        })
+        order.save(function (err , data) {
+			if(err){
+				console.log(err)
+				return
+			}
+        })
+	})
+    res.send({
+        status: 0,
+        infos: "提交成功"
+    })
+
+})
+
+// 获取订单状态
+router.get('/getOrderStatus', function (req, res) {
+	console.log(req.query.user)
+	// 通过客户的用户名查询订单消息
+	var cutomer = req.query.user
+    var orderModel = mongoose.model('order');
+    orderModel.find({
+		customer: cutomer
+	}, {_id:0, status:1},function (err, data) {
+		if(err){
+			return
+		}
+		res.send(data)
+    })
+})
+
+router.get('/getOrders', function (req, res) {
+    console.log(req.query.user)
+    // 通过客户的用户名查询订单消息
+    var cutomer = req.query.user
+    var orderModel = mongoose.model('order');
+    orderModel.find({
+        customer: cutomer
+    },function (err, data) {
+        if(err){
+            return
+        }
+        res.send(data)
+    })
+})
 module.exports = router;
+
 
