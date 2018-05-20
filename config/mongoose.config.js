@@ -44,7 +44,8 @@ var OrdersSchema = new mongoose.Schema({
     startaddress: {type:String},
     endaddress: {type:String},
     status: {type: Number, default: 0},
-    time:{type:Date,default:Date.now}
+    time:{type:Date,default:Date.now},
+    logistics: {type:Array}
 });
 
 mongoose.model('User',UsersSchema);

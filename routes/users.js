@@ -50,6 +50,7 @@ router.get('/login', function (req, res) {
                 if(!req.session.username){
                     req.session.username = clientData.user;
                 }
+                console.log("111"+req.session.username);
                 res.json({ret_code: 0, ret_msg: '登录成功',userInfos:data[0]});
 			}else {
 				res.send({
@@ -150,12 +151,14 @@ router.get('/getGoodsInfos', function (req, res, next) {
 router.get('/getDetail', function (req, res, next) {
     // body...
 	var id = req.query.id;
+	console.log(id)
    var shopModel = mongoose.model('shop');
     shopModel.find({_id:id},{_id:1,shopName:1, user:1},function (err, data) {
 		if(err){
 			console.log(err)
 			return
 		}
+		console.log(data[0]+"1313")
 		// 在pics库中查询详细资料
         var goodsModel = mongoose.model('good');
 
@@ -272,6 +275,10 @@ router.post('/createOrder', function (req, res, next) {
             user: item.goodsInfos.user,
             startaddress: item.goodsInfos.address,
             endaddress: item.customer.address,
+            logistics: [{
+            	time: Date.now(),
+				infos: "卖家已发货"
+			}]
         })
         order.save(function (err , data) {
 			if(err){
@@ -315,6 +322,45 @@ router.get('/getOrders', function (req, res) {
             return
         }
         res.send(data)
+    })
+})
+
+// 通过sid查询订单信息
+router.get('/getOrderInfos', function (req, res) {
+    console.log(req.query.sid)
+    // 通过客户的用户名查询订单消息
+    var sid = req.query.sid
+    var orderModel = mongoose.model('order');
+    orderModel.find({
+        _id: sid
+    },function (err, data) {
+        if(err){
+            return
+        }
+        res.send(data[0])
+    })
+})
+// 通过sid修改订单信息
+router.get('/changeOrder', function (req, res) {
+    console.log(req.query.sid, req.query.infos)
+    // 通过客户的用户名查询订单消息
+    var sid = req.query.sid
+    var orderModel = mongoose.model('order');
+    orderModel.findByIdAndUpdate({
+        _id: sid
+    },{$push: {
+    	logistics: {
+    		time: Date.now(),
+			infos: req.query.infos
+		}
+		}},function (err, data) {
+        if(err){
+            return
+        }
+        res.send({
+			status: 0,
+			infos: "更新成功"
+		})
     })
 })
 module.exports = router;
