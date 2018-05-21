@@ -27,77 +27,74 @@ app.use(bodyparser.urlencoded({ extended: true }));
 // 登录状态 0 表示成功 1: 失败
 
 // 登录页面创建session
-router.get('/login', function (req, res) {
-		var clientData = JSON.parse(req.query.form);
-
-		console.log(clientData);
-		// 获取model
-		var userModel = mongoose.model('User');
-		userModel.find({user: clientData.user},function (err, data) {
-			if(err){
-				console.log(err)
-			}
-			console.log(data, data[0])
-
-			if(!data[0]){
-				res.send({
-					status: 2,
-					info: "用户名不存在"
-				})
-				return
-			}
-			if(data[0].password === clientData.pw){
-                if(!req.session.username){
-                    req.session.username = clientData.user;
-                }
-                console.log("111"+req.session.username);
-                res.json({ret_code: 0, ret_msg: '登录成功',userInfos:data[0]});
-			}else {
-				res.send({
-					status: 1,
-					info: '用户名与密码不匹配'
-				})
-			}
-        })
-
-
+router.get('*', function (req, res, next) {
+	console.log('aa')
+	if(!req.session.username){
+		res.send({
+			status: 1,
+			infos: "请先登录"
+		})
+	}else {
+		next()
+	}
 })
 
-// 页面注册
-router.get('/register', function (req, res) {
-    var clientData = JSON.parse(req.query.form);
-		// 获取model
-	var userModel = mongoose.model('User');
+router.post('*', function (req, res, next) {
+    console.log('bb')
+    if(!req.session.username){
+        res.send({
+            status: 1,
+            infos: "请先登录"
+        })
+    }else {
+        next()
+    }
+})
 
-    userModel.find({user:clientData.user},function (err, data) {
+router.get('/getUsers', function (req,res, next) {
+    var userModel = mongoose.model('User');
+    userModel.find({},function (err, data) {
 		if(err){
-			console.log(err)
+			return
 		}
-		console.log(data[0], !!data[0])
-		if(!data[0]){
-			var user = new userModel({
-				user: clientData.user,
-				address: clientData.address,
-				phone: clientData.phone,
-                password: clientData.pw
-			});
-
-			user.save(function (err) {
-				if(err){
-					console.log(err);
-					res.send({status:1, info: "数据库存储失败"})
-				}else {
-					res.send({status:0, info: "成功"})
-				}
-            })
-		}else {
-			res.send({
-				status:2,
-				info: "用户名已存在，请重新输入"
-			})
-		}
+		res.send(data)
     })
+})
 
+// 删除用户
+router.get('/deleteUser', function (req,res, next) {
+	var user = req.query.user
+    var userModel = mongoose.model('User');
+    userModel.remove({user:user},function (err, data) {
+        if(err){
+            return
+        }
+        res.send({
+			status: 0,
+			infos: "删除成功"
+		})
+    })
+})
+
+// 更改用户信息
+router.get('/updateUser', function (req,res, next) {
+    var user = req.query.user
+    var userModel = mongoose.model('User');
+    console.log(user,req.query.usertype);
+    userModel.update({user:user},{$set: {
+    	usertype: req.query.usertype,
+		password: req.query.password,
+		user:user}
+	},{multi:true, overwrite: true},function (err, data) {
+        if(err){
+            return
+        }
+        console.log(data, data[0])
+        res.send({
+            status: 0,
+            infos: "更新成功"
+        })
+    })
 })
 
 router.get('/slide_imgs', function(req, res, next){

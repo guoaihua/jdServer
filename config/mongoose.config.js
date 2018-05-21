@@ -14,7 +14,8 @@ var UsersSchema = new mongoose.Schema({
     password:{type:String},
     address: {type:String},
     phone: {type:String},
-    time:{type:Date,default:Date.now}
+    time:{type:Date,default:Date.now},
+    usertype:{type:String}
 });
 
 var GoodsSchema = new mongoose.Schema({

@@ -31,7 +31,7 @@ app.use(session({
     secret: 'secret',
     resave: false,
     saveUninitialized: true,
-    cookie: { maxAge: 80000 , secure: false }
+    cookie: { maxAge: 800000 , secure: false }
 }))
 
 app.use(cors({credentials: true, origin: 'http://localhost:8080'}));
